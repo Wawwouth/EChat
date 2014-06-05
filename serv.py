@@ -38,6 +38,8 @@ class Server():
 
 			for client in new_clients:
 				sock, infos = client.accept()
+				print u"Nouveau client:"
+				print infos
 				# On ajoute la socket connectée à la liste des clients
 				self.clients[sock] = Client(irc=sock)
 
