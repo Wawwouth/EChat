@@ -119,8 +119,15 @@ class Client():
 
 	def auth_handler(self, cmd, args):
 		if len(args) == 2:
+			# L'uid doit être un nombre
+			if not args[0].decode().isnumeric():
+				msg = u"Erreur lors de l'authentification, votre userID doit être un nombre"
+				self.privmsg(self.irc_nick, "[AUTH]", msg)
+				return
 			self.ec_uid = args[0]
 			self.ec_salt = args[1]
+			msg = u"Vous êtes maintenant authentifié, uid: %s, salt: %s" % (self.ec_uid, self.ec_salt)
+			self.privmsg(self.irc_nick, "[AUTH]", msg)
 
 	def kick_handler(self, cmd, args):
 		room = args[0].replace("#", "")
