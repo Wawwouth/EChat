@@ -129,7 +129,7 @@ class Client():
 		if len(args) > 2:
 			reason = args[2]
 		if room in self.ec_rooms:
-			self.ec_rooms[room].kick(user, reason)
+			self.ec_rooms[room].ec_kick(user, reason)
 
 	def ban_handler(self, cmd, args):
 		pass
