@@ -131,23 +131,23 @@ class Room():
 		user = self.unspacify(data["username"])
 		target = "#%s" % self.alias
 
-		msg = data["message"]
-		matches = self.status_reg.match(msg)
+		# msg = data["message"]
+		# matches = self.status_reg.match(msg)
 		
-		if matches:
-			action = matches.group(1)
-			reason = matches.group(2)
-			if action == "kick":
-				del self.members[data["userID"]]
-				self.owner.kick(user, target, reason)
-			elif action == "banni":
-				del self.members[data["userID"]]
-				self.owner.ban(user, target, reason)
-		else:
-			source = "[SERVER]"
-			color = "\0034"
-			msg = "%s (%s) %s" % (color, user, data["message"])
-			self.owner.privmsg(target, source, msg)
+		# if matches:
+		# 	action = matches.group(1)
+		# 	reason = matches.group(2)
+		# 	if action == "kick":
+		# 		del self.members[data["userID"]]
+		# 		self.owner.kick(user, target, reason)
+		# 	elif action == "banni":
+		# 		del self.members[data["userID"]]
+		# 		self.owner.ban(user, target, reason)
+		# else:
+		source = "[SERVER]"
+		color = "\0034"
+		msg = "%s (%s) %s" % (color, user, data["message"])
+		self.owner.privmsg(target, source, msg)
 
 	def on_ec_recive_tips_message(self, data):
 		target = "#%s" % self.alias
@@ -168,7 +168,7 @@ class Room():
 		# roomID, slowMode, welcomeMessage
 		self.roomData = data["roomData"]
 		self.id = self.roomData["roomID"]
-		self.topic = self.roomData["welcomeMessage"]
+		self.topic = "%s | slowMode: '%s'" % (self.roomData["welcomeMessage"], self.roomData["slowMode"])
 		self.owner.topic(self.alias, self.topic)
 
 		# {userID: "username", ...}
