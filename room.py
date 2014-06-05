@@ -178,6 +178,7 @@ class Room():
 		self.owner.num_reply("366", "#%s :End of NAMES list" % self.alias)
 	
 	def on_ec_init_connexion_anonymous(self, data):
+		msg = u"Vous êtes connectés en tant qu'anonyme, authentifiez vous pour avoir accès à la liste des utilisateurs"
 		# roomID, slowMode, welcomeMessage
 		self.roomData = data["roomData"]
 		self.id = self.roomData["roomID"]
@@ -194,19 +195,19 @@ class Room():
 	def on_ec_user_join(self, data):
 		target = "#%s" % self.alias
 		source = self.unspacify(data["username"])
-
-		self.members[data["id"]] = source
-		self.owner.joined(target, source)
+		if source != self.owner.irc_nick:
+			self.members[data["id"]] = source
+			self.owner.joined(target, source)
 	
 	def on_ec_user_leave(self, data):
 		target = target = "#%s" % self.alias
 		source = self.unspacify(data["username"])
-
-		for m in self.members:
-			if self.members[m] == source:
-				del self.members[m]
-				self.owner.quit(source, target, self.rand_part_msg())
-				return
+		if source != self.owner.irc_nick:
+			for m in self.members:
+				if self.members[m] == source:
+					del self.members[m]
+					self.owner.quit(source, target, self.rand_part_msg())
+					return
 	
 	def on_ec_activate_chat(self):
 		# nothing
