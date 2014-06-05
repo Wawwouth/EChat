@@ -47,11 +47,11 @@ class Client():
 			if (conf.aliases[chan].decode().isnumeric()):
 				self.ec_rooms[chan] = Room(self, roomID, chan)
 			else:
-				self.num_reply(u"403", u"#%s :No such channel, please check your configuration file, your alias don't match a valied roomID")
+				self.num_reply(u"403", u"#%s :No such channel, please check your configuration file, your alias don't match a valied roomID" % chan)
 		elif chan.decode().isnumeric():
 			self.ec_rooms[chan] = Room(self, chan, chan)
 		else:
-			self.num_reply(u"403", u"#%s :No such channel, try with a number or a predefined alias")
+			self.num_reply(u"403", u"#%s :No such channel, try with a number or a predefined alias" % chan)
 
 # IRC data handling
 	def parse_msg(self, msg):
@@ -98,7 +98,9 @@ class Client():
 
 	def join_handler(self, cmd, args):
 		if len(args) > 0:
-			self.join(args[0])
+			chans = args[0].split(",")
+			for chan in chans:
+				self.join(chan)
 
 	def privmsg_handler(self, cmd, args):
 		if self.is_connected_to(args[0]):
