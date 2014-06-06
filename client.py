@@ -8,6 +8,7 @@ from room import *
 class Client():
 	def __init__(self, irc=None):
 		self.linesep = re.compile(r"\r?\n")
+		self.motdfile = u"motd.txt"
 		self.has_quit = False
 
 		self.user = u"User"
@@ -90,7 +91,7 @@ class Client():
 		self.num_reply(u"003", u":This server was created sometime")
 		self.num_reply(u"004", u":Localhost HQN-0.1")
 		self.num_reply(u"251", u":There are 3 million users and 0 services on 1 server")
-		self.num_reply(u"422", u":MOTD File is missing")
+		self.send_motd()
 
 	def nick_handler(self, cmd, args):
 		if len(self.ec_rooms) == 0:
@@ -184,6 +185,19 @@ class Client():
 			}
 
 # send over IRC socket
+	def send_motd(self):
+		if self.motdfile:
+			try:
+				lines = open(self.motdfile).readlines()
+				self.num_reply(u"375", u":- Localhost Message of the day")
+				for line in lines:
+					self.num_reply(u"372", u":- %s" % line.decode("utf-8"))
+				self.num_reply(u"376", u":End of /MOTD command")
+			except IOError:
+				self.num_reply(u"422", u":MOTD File is missing")
+		else:
+			self.num_reply(u"422", u":MOTD File is missing")
+		
 	def topic(self, chan, topic):
 		self.num_reply(u"332", u"#%s %s" % (chan, topic))
 
