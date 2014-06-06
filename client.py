@@ -35,9 +35,10 @@ class Client():
 		return chan in self.ec_rooms
 
 	def nick(self, irc_nick, ec_nick=""):
-		self.irc_nick = irc_nick
-		self.ec_nick = ec_nick
-		self.reply(u"NICK %s" % (irc_nick))
+		if irc_nick != self.irc_nick:
+			self.irc_nick = irc_nick
+			self.ec_nick = ec_nick
+			self.reply(u"NICK %s" % (irc_nick))
 
 	def join(self, chan):
 		# roomID can be the rooms number
@@ -236,14 +237,14 @@ class Client():
 		self.send(u":%s JOIN %s" % (source, target))
 
 	def left(self, target, source, reason):
-		self.send(":%s PART %s :%s" % (source, target, reason))
+		self.send(u":%s PART %s :%s" % (source, target, reason))
 
 	def privmsg(self, target, source, msg):
-		message = ":%s PRIVMSG %s :%s" % (source, target, msg)
+		message = u":%s PRIVMSG %s :%s" % (source, target, msg)
 		self.send(message)
 
 	def kick(self, user, target, reason):
-		self.send(":[SERVER] KICK %s %s :%s" % (target, user, reason))
+		self.send(u":[SERVER] KICK %s %s :%s" % (target, user, reason))
 
 	def ban(self, user, target, reason):
 		self.send(u":[SERVER] MODE %s +b %s" % (target, user))
