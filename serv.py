@@ -17,11 +17,6 @@ class Server():
 		self.ports = ports
 		# socks [sock1, sock2, ...]
 		self.socks = []
-		# rooms {"RoomName": socket}
-		self.rooms = {
-			"#ectv" : None,
-			"#ectv2" : None
-		}
 
 		for port in self.ports:
 			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -61,10 +56,6 @@ class Server():
 		print("Fermeture des connexions")
 		for client in self.clients:
 			client.close()
-		connexion_principale.close()
-
-	def del_client(self, client_sock):
-		del self.clients[client_sock]
 
 # </Server> ----------------------------------------------------------------
 
