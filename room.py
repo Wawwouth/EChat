@@ -117,14 +117,14 @@ class Room():
 		if data["username"] != self.owner.ec_nick:
 			user = self.unspacify(data["username"])
 			target = "#%s" % self.alias
-			if (data["userID"] not in self.members):
+			if (not data["userID"] in self.members):
 				self.members[data["userID"]] = user
 				self.owner.joined(target, user)
 			source = ""
 			if (data["rights"] != ""):
 				source += "[%s]" % data["rights"]
 			source += user
-			msg = data["message"]
+			msg = data["message"].replace("\r\n", "")
 			self.owner.privmsg(target, source, msg)
 	
 	def on_ec_recive_status_message(self, data):
@@ -195,7 +195,7 @@ class Room():
 	def on_ec_user_join(self, data):
 		target = "#%s" % self.alias
 		source = self.unspacify(data["username"])
-		if source != self.owner.irc_nick:
+		if (source != self.owner.irc_nick) and (source not in self.members):
 			self.members[data["id"]] = source
 			self.owner.joined(target, source)
 	
