@@ -1,7 +1,7 @@
 # !/usr/bin/python
 # -*- coding: utf8 -*-
 
-import conf, re, string
+import conf, re, string, socket
 from room import *
 
 # <Client> -----------------------------------------------------------------
@@ -34,11 +34,17 @@ class Client():
 		chan = chan.replace("#", "")
 		return chan in self.ec_rooms
 
-	def nick(self, irc_nick, ec_nick=""):
-		if irc_nick != self.irc_nick:
+	def nick(self, irc_nick, ec_nick):
+		if irc_nick != self.irc_nick or ec_nick != self.ec_nick:
 			self.irc_nick = irc_nick
 			self.ec_nick = ec_nick
 			self.reply(u"NICK %s" % (irc_nick))
+
+	def close(self):
+		for roomID, room in self.ec_rooms.items():
+			room.th.stop()
+		self.irc_sock.close()
+		self.has_quit = True
 
 	def join(self, chan):
 		# roomID can be the rooms number
@@ -62,6 +68,8 @@ class Client():
 
 		# lines[:-1] = tout sauf le dernier qui est une chaîne vide
 		for line in lines[:-1]:
+			if self.has_quit:
+				break
 			if not line:
 				#ligne vide
 				continue
@@ -87,6 +95,8 @@ class Client():
 
 # IRC handlers
 	def user_handler(self, cmd, args):
+		print "\t(%s) connected" % args[0]
+		self.user = args[0]
 		self.num_reply(u"001", u":Hi welcome to IRC, un endroit qu'il vaut mieux éviter")
 		self.num_reply(u"002", u":Your host is Localhost, running version HQN-0.1")
 		self.num_reply(u"003", u":This server was created sometime")
@@ -96,7 +106,7 @@ class Client():
 
 	def nick_handler(self, cmd, args):
 		if len(self.ec_rooms) == 0:
-			self.nick(args[0])
+			self.nick(args[0], "")
 
 	def join_handler(self, cmd, args):
 		if len(args) > 0:
@@ -109,10 +119,8 @@ class Client():
 			self.ec_rooms[args[0].replace("#", "")].ec_send(u"send_chat_message", args[1])
 
 	def quit_handler(self, cmd, args):
-		for roomID, room in self.ec_rooms.items():
-			room.th.stop()
-		self.irc_sock.close()
-		self.has_quit = True
+		print "\t(%s) disconnected" % self.user
+		self.close()
 
 	def part_handler(self, cmd, args):
 		chan = args[0].replace("#", "")
@@ -215,10 +223,15 @@ class Client():
 			self.irc_sock.send(message)
 
 	def send(self, msg):
-		if self.irc_sock:
-			message = "%s\r\n" % msg
-			message = message.encode("utf-8")
-			self.irc_sock.send(message)
+		try:
+			if self.irc_sock:
+				msg = msg.replace("\n", "")
+				msg = msg.replace("\r", "")
+				message = "%s\r\n" % msg
+				message = message.encode("utf-8")
+				self.irc_sock.send(message)
+		except socket.error as serr:
+			self.close()
 
 	def reply(self, msg):
 		if self.irc_sock:
