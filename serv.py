@@ -27,35 +27,41 @@ class Server():
 
 	def start(self):
 		self.clients = {}
-		while True:
-			new_clients, wlist, xlist = select.select(self.socks,
-				[], [], 0.10)
+		try:
+			while True:
+				new_clients, wlist, xlist = select.select(self.socks,
+					[], [], 0.10)
 
-			for client in new_clients:
-				sock, infos = client.accept()
-				print u"Nouveau client:"
-				print infos
-				# On ajoute la socket connectée à la liste des clients
-				self.clients[sock] = Client(irc=sock)
+				for client in new_clients:
+					sock, infos = client.accept()
+					# On ajoute la socket connectée à la liste des clients
+					self.clients[sock] = Client(irc=sock)
 
-			clients_a_lire = []
-			try:
-				clients_a_lire, wlist, xlist = select.select(self.clients,
-						[], [], 0.05)
-			except select.error:
-				pass
-			else:
-				# On parcourt la liste des clients à lire
-				for client in clients_a_lire:
-					msg_recu = client.recv(1024)
-					msg_recu = msg_recu.decode("utf8")
-					self.clients[client].parse_msg(msg_recu)
-					if self.clients[client].has_quit:
-						del self.clients[client]
-
-		print("Fermeture des connexions")
-		for client in self.clients:
-			client.close()
+				clients_a_lire = []
+				try:
+					clients_a_lire, wlist, xlist = select.select(self.clients,
+							[], [], 0.05)
+				except select.error:
+					pass
+				else:
+					# On parcourt la liste des clients à lire
+					for client in clients_a_lire:
+						try:
+							msg_recu = client.recv(1024)
+							msg_recu = msg_recu.decode("utf8")
+							self.clients[client].parse_msg(msg_recu)
+							if self.clients[client].has_quit:
+								del self.clients[client]
+						except socket.error :
+							self.clients[client].close()
+							print "(%s) disconnected" % self.clients[client].user
+							del self.clients[client]
+		except (KeyboardInterrupt, SystemExit):
+			print("Fermeture des connexions")
+			for sock, client in self.clients.items():
+				client.close()
+			for sock in self.socks:
+				sock.close()
 
 # </Server> ----------------------------------------------------------------
 
