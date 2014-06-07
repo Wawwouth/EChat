@@ -112,19 +112,19 @@ class Room():
 	
 	def on_ec_error(self):
 		pass
-	
+
 	def on_ec_recive_chat_message(self, data):
 		if data["username"] != self.owner.ec_nick:
 			user = self.unspacify(data["username"])
 			target = "#%s" % self.alias
-			if (not data["userID"] in self.members):
+			if (data["userID"] not in self.members):
 				self.members[data["userID"]] = user
 				self.owner.joined(target, user)
 			source = ""
 			if (data["rights"] != ""):
-				source += "[%s]" % data["rights"]
+				source += "[%s]_" % data["rights"]
 			source += user
-			msg = data["message"].replace("\r\n", "")
+			msg = data["message"]
 			self.owner.privmsg(target, source, msg)
 	
 	def on_ec_recive_status_message(self, data):
@@ -146,20 +146,21 @@ class Room():
 		# else:
 		source = "[SERVER]"
 		color = "\0034"
-		msg = "%s (%s) %s" % (color, user, data["message"])
+		msg = "%s(%s) %s" % (color, user, data["message"])
 		self.owner.privmsg(target, source, msg)
 
 	def on_ec_recive_tips_message(self, data):
 		target = "#%s" % self.alias
 		source = "[TIPS]"
-		msg = "(%s) a envoyé %s tips: %s" % (data["username"], data["nbTips"], data["message"])
+		tips_color = "\0033"
+		msg = u"%s(%s) a envoyé %s tips: { %s }" % (tips_color, data["username"], data["amount"], data["message"])
 
 		self.owner.privmsg(target, source, msg)
 	
 	def on_ec_init_connexion(self, data):
 		# banned, ignorable, previousMessage, rights, slowMode, superAdmin(bool)
 		self.userInfo = data["userInfo"]
-		self.owner.nick(self.unspacify(self.userInfo["username"]) ,self.userInfo["username"])
+		self.owner.nick(irc_nick=self.unspacify(self.userInfo["username"]) ,ec_nick=self.userInfo["username"])
 		self.owner.banned = self.userInfo["banned"]
 		self.owner.rights = self.userInfo["rights"]
 		self.owner.slowMode = self.userInfo["slowMode"]
@@ -228,8 +229,9 @@ class Room():
 	def set_handlers(self):
 		eventHandlers = {
 				'connecting' : self.on_ec_connecting,
-				'recive_chat_message' : self. on_ec_recive_chat_message,
-				'recive_status_message' : self.on_ec_recive_status_message,
+				'receive_chat_message' : self. on_ec_recive_chat_message,
+				'receive_status_message' : self.on_ec_recive_status_message,
+				'receive_tips_message' : self.on_ec_recive_tips_message,
 				'connect_failed' : self.on_ec_connect_failed,
 				'error' : self.on_ec_error,
 				'reconnect_failed' : self.on_ec_reconnect_failed,
@@ -238,6 +240,8 @@ class Room():
 				'connect' : self.on_ec_connect,
 				'enable_chat' : self.on_ec_enable_chat,
 				'disable_chat' : self.on_ec_disable_chat,
+				'activate_chat' : self.on_ec_activate_chat,
+				'deactivate_chat' : self.on_ec_deactivate_chat,
 				'user_join' : self.on_ec_user_join,
 				'user_leave' : self.on_ec_user_leave,
 				'init_connexion' : self.on_ec_init_connexion,
