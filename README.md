@@ -3,7 +3,7 @@ EChat
 
 Le programme est un serveur IRC que vous lancez en local, et sur lequel vous vous connectez avec votre client IRC habituel.
 
-Installation:
+Utilisation:
 ====
 
 1) Avant de pouvoir lancer le serveur il vous faudra installer la version 2.7.7 de Python disponible ici (https://www.python.org/ftp/python/2.7.7/python-2.7.7.msi)
