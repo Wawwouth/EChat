@@ -1,0 +1,12 @@
+-------------------------------------------------------------------
+Vous êtes maintenant connectés au serveur local,
+Avant de pouvoir rejoindre un salon vous devez vous authentifier comme suis:
+    * Connectez vous avec votre compte sur le site d'Eclypsia
+    * Rendez-vous sur la page de n'importe quel stream bénéficiant du nouveau chat
+    * Cliquez sur le bouton "popup" du chat
+    * Dans la fenêtre qui viens de s'ouvrir l'URL ressemble à ça:
+        chatv3.eclypsia.com/iframe.html?userID=XXXX&roomID=YYYY&salt=ZZZZ&popup=true
+    * Récupérez votre userID et votre salt, puis tapez sur votre client IRC la commande /auth XXXX ZZZZ
+    * Une fois authentifiés, vous pouvez rejoindre une room en tapant /join #roomID, avec roomID l'identifiant se trouvant dans l'URL
+    * Certaines room sont prédéfinies dans le fichier conf.py sous la forme ("alias" : "roomID"), vous pouvez donc les rejoindre en tapant /join #alias, mais également rajouter autant d'alias que vous le souhaitez dans ce fichier.
+-------------------------------------------------------------------

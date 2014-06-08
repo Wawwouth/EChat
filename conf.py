@@ -6,6 +6,7 @@ ec_host = "95.142.101.119"
 ec_port1 = 12564
 ec_port2 = 12565
 
+irc_host = ''
 irc_ports = [6667, 6668]
 
 join_event = "join_room"

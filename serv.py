@@ -1,55 +1,48 @@
 # !/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys
 import socket, select
-import string
-import re
 import conf
 from client import *
 from socketIO_client import SocketIO
 
-irc_host = ''
-
 # <Server> -----------------------------------------------------------------
 class Server():
-	def __init__(self, ports):
+	def __init__(self, host, ports):
 		self.ports = ports
-		# socks [sock1, sock2, ...]
+		self.host = host
+		# 
 		self.socks = []
-
 		for port in self.ports:
 			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			sock.bind((irc_host, port))
+			sock.bind((self.host, port))
 			sock.listen(5)
 			self.socks.append(sock)
 		print("Serveur UP, port(s): %s" % self.ports)
 
 	def start(self):
+		# clients = {client_socket : Client(), ...}
 		self.clients = {}
 		try:
 			while True:
-				new_clients, wlist, xlist = select.select(self.socks,
-					[], [], 0.10)
-
+				# Looking for new connexions
+				new_clients, wlist, xlist = select.select(self.socks, [], [], 0.10)
+				# Adding new clients to the list
 				for client in new_clients:
 					sock, infos = client.accept()
-					# On ajoute la socket connectée à la liste des clients
 					self.clients[sock] = Client(irc=sock)
 
-				clients_a_lire = []
+				to_read = []
 				try:
-					clients_a_lire, wlist, xlist = select.select(self.clients,
-							[], [], 0.05)
+					to_read, wlist, xlist = select.select(self.clients, [], [], 0.05)
 				except select.error:
 					pass
 				else:
-					# On parcourt la liste des clients à lire
-					for client in clients_a_lire:
+					# 
+					for client in to_read:
 						try:
-							msg_recu = client.recv(1024)
-							msg_recu = msg_recu.decode("utf8")
-							self.clients[client].parse_msg(msg_recu)
+							received = client.recv(1024).decode("utf8")
+							self.clients[client].parse_msg(received)
 							if self.clients[client].has_quit:
 								del self.clients[client]
 						except socket.error :
@@ -57,14 +50,17 @@ class Server():
 							print "(%s) disconnected" % self.clients[client].user
 							del self.clients[client]
 		except (KeyboardInterrupt, SystemExit):
-			print("Fermeture des connexions")
-			for sock, client in self.clients.items():
-				client.close()
-			for sock in self.socks:
-				sock.close()
+			self.stop()
 
+	def stop(self):
+		print("Arrêt du serveur...")
+		for sock, client in self.clients.items():
+			client.close()
+		for sock in self.socks:
+			sock.close()
+		print "Serveur DOWN."
 # </Server> ----------------------------------------------------------------
 
 if __name__ == "__main__":
-	serv = Server(conf.irc_ports)
+	serv = Server(conf.irc_host, conf.irc_ports)
 	serv.start()

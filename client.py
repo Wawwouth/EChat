@@ -249,9 +249,6 @@ class Client():
 	def joined(self, target, source):
 		self.send(u":%s JOIN %s" % (source, target))
 
-	def left(self, target, source, reason):
-		self.send(u":%s PART %s :%s" % (source, target, reason))
-
 	def privmsg(self, target, source, msg):
 		message = u":%s PRIVMSG %s :%s" % (source, target, msg)
 		self.send(message)

@@ -128,7 +128,7 @@ class Room():
 			self.owner.privmsg(target, source, msg)
 	
 	def on_ec_recive_status_message(self, data):
-		user = self.unspacify(data["username"])
+		user = data["username"]
 		target = "#%s" % self.alias
 
 		# msg = data["message"]
@@ -196,7 +196,7 @@ class Room():
 	def on_ec_user_join(self, data):
 		target = "#%s" % self.alias
 		source = self.unspacify(data["username"])
-		if (source != self.owner.irc_nick) and (source not in self.members):
+		if source != self.owner.irc_nick:
 			self.members[data["id"]] = source
 			self.owner.joined(target, source)
 	
@@ -207,7 +207,7 @@ class Room():
 			for m in self.members:
 				if self.members[m] == source:
 					del self.members[m]
-					self.owner.quit(source, target, self.rand_part_msg())
+					self.owner.part(source, target, self.rand_part_msg())
 					return
 	
 	def on_ec_activate_chat(self):
