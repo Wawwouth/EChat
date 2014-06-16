@@ -4,7 +4,6 @@
 import socket, select, sys
 import conf
 from client import *
-from socketIO_client import SocketIO
 
 # Avoid creating .pyc files
 sys.dont_write_bytecode = True
