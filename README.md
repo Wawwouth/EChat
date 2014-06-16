@@ -12,7 +12,7 @@ Utilisation:
 
 3) Retrouvez le ZIP et décompressez le.
 
-4) Ouvrez le dossier EChat-master qui vient d'être créé et lancer 'serv.py'. Une console devrait s'afficher avec le message "Serveur UP, port(s): [6667, 6668]".
+4) Ouvrez le dossier EChat-master qui vient d'être créé et lancez 'serv.py'. Une console devrait s'afficher avec le message "Serveur UP, port(s): [6667, 6668]".
 
 5) Ouvrez votre client IRC et ajoutez un nouveau serveur avec le nom de votre choix, l'adresse: localhost, et le port: 6667 ou 6668.
 
