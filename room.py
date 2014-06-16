@@ -1,10 +1,10 @@
 # !/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from socketIO import *
 import re, sys
 import conf
 import threading
-from socketIO import *
 import logging
 
 # Avoid creating .pyc files
@@ -39,8 +39,10 @@ class Room():
 		self.write_buffer = ["", ""]
 		if alias == "ectv" or roomID == conf.aliases["ectv"]:
 			self.s = SocketIO(conf.ec_host, conf.ec_port1)
-		else:
+		elif alias == "ectv2" or roomID == conf.alias["ectv2"]:
 			self.s = SocketIO(conf.ec_host, conf.ec_port2)
+		else: 
+			self.s = SocketIO(conf.ec_host, conf.ec_port_affiliate)
 		self.set_handlers()
 		self.th = SockThread(self.s)
 		self.th.start()
@@ -65,6 +67,18 @@ class Room():
 	def ec_slow(self, roomID, nick, delay="10"):
 		message = "/slow '%s' %s" % (self.spacify(nick), delay)
 		self.ec_send(roomID, msg_event, message)
+
+	def ec_get_userslist(self, fun):
+		if self.s:
+			self.s.emit("get_userlist", {'roomID': self.id}, fun)
+
+	def ec_refresh_userslist(self):
+		self.ec_get_userslist(self.on_ec_refresh_userlist)
+
+	def ec_who(self, usersList):
+		for uid in usersList:
+			self.owner.num_reply(u"352", u"#%s ECUser EclypsiaChat Localhost %s H :0 %s" % (self.alias, usersList[uid], uid))
+		self.owner.num_reply(u"315", u":End of WHO list")
 
 	def left(self, client):
 		del self.members[client.irc_sock]
@@ -115,21 +129,18 @@ class Room():
 	def on_ec_error(self):
 		pass
 
-	def on_ec_recive_chat_message(self, data):
+	def on_ec_receive_chat_message(self, data):
 		if data["username"] != self.owner.ec_nick:
 			user = self.unspacify(data["username"])
 			target = "#%s" % self.alias
-			if (data["userID"] not in self.members):
-				self.members[data["userID"]] = user
-				self.owner.joined(target, user)
 			source = ""
 			if (data["rights"] != ""):
-				source += "[%s]_" % data["rights"]
+				source += "[%s]:" % data["rights"]
 			source += user
 			msg = data["message"]
 			self.owner.privmsg(target, source, msg)
 	
-	def on_ec_recive_status_message(self, data):
+	def on_ec_receive_status_message(self, data):
 		user = data["username"]
 		target = "#%s" % self.alias
 
@@ -138,7 +149,7 @@ class Room():
 		msg = "%s(%s) %s" % (color, user, data["message"])
 		self.owner.privmsg(target, source, msg)
 
-	def on_ec_recive_tips_message(self, data):
+	def on_ec_receive_tips_message(self, data):
 		target = "#%s" % self.alias
 		source = "[TIPS]"
 		tips_color = "\0033"
@@ -161,10 +172,7 @@ class Room():
 		self.topic = "%s | slowMode: '%s'" % (self.roomData["welcomeMessage"], self.roomData["slowMode"])
 		self.owner.topic(self.alias, self.topic)
 
-		# {userID: "username", ...}
-		for uid, nick in data["userList"].items():
-			self.owner.num_reply("353", "= #%s :%s" % (self.alias, self.unspacify(nick)))
-		self.owner.num_reply("366", "#%s :End of NAMES list" % self.alias)
+		self.ec_refresh_userslist()
 	
 	def on_ec_init_connexion_anonymous(self, data):
 		msg = u"Vous êtes connectés en tant qu'anonyme, authentifiez vous pour avoir accès à la liste des utilisateurs"
@@ -212,12 +220,17 @@ class Room():
 	def on_ec_set_header(self, data):
 		self.owner.topic(self.alias, data)
 
+	def on_ec_refresh_userlist(self, data):
+		for uid, nick in data.items():
+			self.owner.num_reply("353", "= #%s :%s" % (self.alias, self.unspacify(nick)))
+		self.owner.num_reply("366", "#%s :End of NAMES list" % self.alias)
+
 	def set_handlers(self):
 		eventHandlers = {
 				'connecting' : self.on_ec_connecting,
-				'receive_chat_message' : self. on_ec_recive_chat_message,
-				'receive_status_message' : self.on_ec_recive_status_message,
-				'receive_tips_message' : self.on_ec_recive_tips_message,
+				'receive_chat_message' : self. on_ec_receive_chat_message,
+				'receive_status_message' : self.on_ec_receive_status_message,
+				'receive_tips_message' : self.on_ec_receive_tips_message,
 				'connect_failed' : self.on_ec_connect_failed,
 				'error' : self.on_ec_error,
 				'reconnect_failed' : self.on_ec_reconnect_failed,
@@ -232,7 +245,8 @@ class Room():
 				'user_leave' : self.on_ec_user_leave,
 				'init_connexion' : self.on_ec_init_connexion,
 				'init_connexion_anonymous' : self.on_ec_init_connexion_anonymous,
-				'set_header' : self.on_ec_set_header
+				'set_header' : self.on_ec_set_header,
+				'refresh_userlist' : self.on_ec_refresh_userlist
 			}
 		for event in eventHandlers:
 			self.s.on(event, eventHandlers[event])
