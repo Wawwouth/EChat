@@ -164,7 +164,12 @@ class Client():
 		self.send(u":%s PONG :%s" % (self.irc_nick, args[0]))
 
 	def who_handler(self, cmd, args):
-		pass
+		if len(args) < 1:
+			return
+		target = args[0].replace("#", "")
+		if target in self.ec_rooms:
+			room = self.ec_rooms[target]
+			room.ec_get_userslist(room.ec_who)
 
 	def mode_handler(self, cmd, args):
 		if len(args) > 2:
