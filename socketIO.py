@@ -21,6 +21,8 @@ class SocketIO():
 		self.HOST = host
 		self.event_handler = {}
 		self.connect()
+		self.packetid = 1
+		self.callbacks = {}
  
 	def __del__(self):
 		self.close()
@@ -52,9 +54,14 @@ class SocketIO():
 	def heartbeat(self):
 		self.ws.send("2::")
 
-	def emit(self,event,data):
+	def emit(self,event,data, callback = None):
 		data = json.dumps(data)
-		message = '5:::{"name":"%s","args":[%s]}' % (event, data)
+		if callback:
+			message = '5:%s+::{"name":"%s","args":[%s]}' % (self.packetid, event, data)
+			self.callbacks[str(self.packetid)] = callback
+			self.packetid += 1
+		else:
+			message = '5:::{"name":"%s","args":[%s]}' % (event, data)
 		self.ws.send(message)
 
 	def ready(self):
@@ -75,21 +82,36 @@ class SocketIO():
 		msg_type = sp[0]
 		if msg_type == "0": # Disconnect
 			self.event_handler["disconnect"]()
+		
 		elif msg_type == "1": # Connect
 			self.event_handler["connect"]()
+		
 		elif msg_type == "2": # Heartbeat
 			self.heartbeat()
+		
 		elif msg_type == "3": # Message
 			pass
+		
 		elif msg_type == "4": # JSON message
 			pass
+		
 		elif msg_type == "5": # Event
 			data = json.loads(":".join(sp[3:]))
 			self.event_handler[data["name"]](data["args"][0])
+
 		elif msg_type == "6": # ACK
-			pass
+			data = ":".join(sp[3:])
+			parts = data.split("+", 1)
+			try:
+				callback = self.callbacks[parts[0]]
+			except KeyError:
+				return
+			args = json.loads(parts[1]) if len(parts) > 1 else []
+			callback(*args)
+
 		elif msg_type == "7": # Error
 			print "[SocketIO Error]: %s" % msg
+		
 		elif msg_type == "8": # Noop (No operation)
 			pass
 
