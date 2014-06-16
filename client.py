@@ -1,8 +1,11 @@
 # !/usr/bin/python
 # -*- coding: utf8 -*-
 
-import conf, re, string, socket
+import conf, re, string, socket, sys
 from room import *
+
+# Avoid creating .pyc files
+sys.dont_write_bytecode = True
 
 # <Client> -----------------------------------------------------------------
 class Client():
@@ -50,16 +53,17 @@ class Client():
 		# roomID can be the rooms number
 		# or a predefined alias (conf.py)
 		chan = chan.replace("#", "")
-		if chan.lower() in conf.aliases:
-			roomID = conf.aliases[chan.lower()]
-			if (conf.aliases[chan].decode().isnumeric()):
-				self.ec_rooms[chan] = Room(self, roomID, chan)
+		if chan not in self.ec_rooms:
+			if chan.lower() in conf.aliases:
+				roomID = conf.aliases[chan.lower()]
+				if (conf.aliases[chan].decode().isnumeric()):
+					self.ec_rooms[chan] = Room(self, roomID, chan)
+				else:
+					self.num_reply(u"403", u"#%s :No such channel, please check your configuration file, your alias don't match a valied roomID" % chan)
+			elif chan.decode().isnumeric():
+				self.ec_rooms[chan] = Room(self, chan, chan)
 			else:
-				self.num_reply(u"403", u"#%s :No such channel, please check your configuration file, your alias don't match a valied roomID" % chan)
-		elif chan.decode().isnumeric():
-			self.ec_rooms[chan] = Room(self, chan, chan)
-		else:
-			self.num_reply(u"403", u"#%s :No such channel, try with a number or a predefined alias" % chan)
+				self.num_reply(u"403", u"#%s :No such channel, try with a number or a predefined alias" % chan)
 
 # IRC data handling
 	def parse_msg(self, msg):

@@ -4,9 +4,11 @@
 import re, sys
 import conf
 import threading
-from socketIO_client import SocketIO
+from socketIO import *
 import logging
-# logging.basicConfig(level=logging.DEBUG)
+
+# Avoid creating .pyc files
+sys.dont_write_bytecode = True
 
 class SockThread(threading.Thread):
 	def __init__(self, sock):
@@ -16,8 +18,8 @@ class SockThread(threading.Thread):
 
 	def run(self):
 		while(not self.Terminated):
-			self.sock.wait(seconds=1)
-		self.sock._transport.close()
+			self.sock.recv(True)
+		self.sock.close()
 
 	def stop(self):
 		self.Terminated = True
@@ -131,19 +133,6 @@ class Room():
 		user = data["username"]
 		target = "#%s" % self.alias
 
-		# msg = data["message"]
-		# matches = self.status_reg.match(msg)
-		
-		# if matches:
-		# 	action = matches.group(1)
-		# 	reason = matches.group(2)
-		# 	if action == "kick":
-		# 		del self.members[data["userID"]]
-		# 		self.owner.kick(user, target, reason)
-		# 	elif action == "banni":
-		# 		del self.members[data["userID"]]
-		# 		self.owner.ban(user, target, reason)
-		# else:
 		source = "[SERVER]"
 		color = "\0034"
 		msg = "%s(%s) %s" % (color, user, data["message"])
@@ -175,7 +164,6 @@ class Room():
 		# {userID: "username", ...}
 		for uid, nick in data["userList"].items():
 			self.owner.num_reply("353", "= #%s :%s" % (self.alias, self.unspacify(nick)))
-			self.members[uid] = self.unspacify(nick)
 		self.owner.num_reply("366", "#%s :End of NAMES list" % self.alias)
 	
 	def on_ec_init_connexion_anonymous(self, data):
@@ -197,18 +185,13 @@ class Room():
 		target = "#%s" % self.alias
 		source = self.unspacify(data["username"])
 		if source != self.owner.irc_nick:
-			self.members[data["id"]] = source
 			self.owner.joined(target, source)
 	
 	def on_ec_user_leave(self, data):
 		target = target = "#%s" % self.alias
 		source = self.unspacify(data["username"])
 		if source != self.owner.irc_nick:
-			for m in self.members:
-				if self.members[m] == source:
-					del self.members[m]
-					self.owner.part(source, target, self.rand_part_msg())
-					return
+			self.owner.part(source, target, self.rand_part_msg())
 	
 	def on_ec_activate_chat(self):
 		# nothing
@@ -225,6 +208,9 @@ class Room():
 	def on_ec_disable_chat(self):
 		# nothing
 		pass
+
+	def on_ec_set_header(self, data):
+		self.owner.topic(self.alias, data)
 
 	def set_handlers(self):
 		eventHandlers = {
@@ -245,7 +231,8 @@ class Room():
 				'user_join' : self.on_ec_user_join,
 				'user_leave' : self.on_ec_user_leave,
 				'init_connexion' : self.on_ec_init_connexion,
-				'init_connexion_anonymous' : self.on_ec_init_connexion_anonymous
+				'init_connexion_anonymous' : self.on_ec_init_connexion_anonymous,
+				'set_header' : self.on_ec_set_header
 			}
 		for event in eventHandlers:
 			self.s.on(event, eventHandlers[event])

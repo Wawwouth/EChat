@@ -1,10 +1,13 @@
 # !/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import socket, select
+import socket, select, sys
 import conf
 from client import *
 from socketIO_client import SocketIO
+
+# Avoid creating .pyc files
+sys.dont_write_bytecode = True
 
 # <Server> -----------------------------------------------------------------
 class Server():
@@ -15,6 +18,7 @@ class Server():
 		self.socks = []
 		for port in self.ports:
 			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			sock.bind((self.host, port))
 			sock.listen(5)
 			self.socks.append(sock)
@@ -58,6 +62,8 @@ class Server():
 			client.close()
 		for sock in self.socks:
 			sock.close()
+		for sock in self.socks:
+			self.socks.remove(sock)
 		print "Serveur DOWN."
 # </Server> ----------------------------------------------------------------
 
