@@ -1,6 +1,10 @@
 # !/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# mods shared vars
+in_cmd_hooks = {}
+out_cmd_hooks = {}
+
 # host = "chatv2.eclypsia.com"
 ec_host = "95.142.101.119"
 ec_port1 = 12564
@@ -31,3 +35,17 @@ aliases = { "ectv" : "23",
 			"le-tol" : "5356",
 			"zerator" : "1"
 			}
+
+def add_out_hook(cmd, hook):
+	cmd = cmd.upper()
+	if cmd in out_cmd_hooks:
+		out_cmd_hooks[cmd].append(hook)
+	else:
+		out_cmd_hooks[cmd] = [hook]
+
+def add_in_hook(cmd, hook):
+	cmd = cmd.upper()
+	if cmd in in_cmd_hooks:
+		in_cmd_hooks[cmd].append(hook)
+	else:
+		in_cmd_hooks[cmd] = [hook]
