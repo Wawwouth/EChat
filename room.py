@@ -39,7 +39,7 @@ class Room():
 		self.write_buffer = ["", ""]
 		if alias == "ectv" or roomID == conf.aliases["ectv"]:
 			self.s = SocketIO(conf.ec_host, conf.ec_port1)
-		elif alias == "ectv2" or roomID == conf.alias["ectv2"]:
+		elif alias == "ectv2" or roomID == conf.aliases["ectv2"]:
 			self.s = SocketIO(conf.ec_host, conf.ec_port2)
 		else: 
 			self.s = SocketIO(conf.ec_host, conf.ec_port_affiliate)
@@ -134,10 +134,11 @@ class Room():
 			user = self.unspacify(data["username"])
 			target = "#%s" % self.alias
 			source = ""
+			msg = ""
 			if (data["rights"] != ""):
 				source += "[%s]:" % data["rights"]
 			source += user
-			msg = data["message"]
+			msg += self.uncolor(data["message"])
 			self.owner.privmsg(target, source, msg)
 	
 	def on_ec_receive_status_message(self, data):
@@ -145,15 +146,13 @@ class Room():
 		target = "#%s" % self.alias
 
 		source = "[SERVER]"
-		color = "\0034"
-		msg = "%s(%s) %s" % (color, user, data["message"])
+		msg = "(%s) %s" % (user, data["message"])
 		self.owner.privmsg(target, source, msg)
 
 	def on_ec_receive_tips_message(self, data):
 		target = "#%s" % self.alias
 		source = "[TIPS]"
-		tips_color = "\0033"
-		msg = u"%s(%s) a envoyé %s tips: { %s }" % (tips_color, data["username"], data["amount"], data["message"])
+		msg = u"(%s) a envoyé %s tips: { %s }" % (data["username"], data["amount"], data["message"])
 
 		self.owner.privmsg(target, source, msg)
 	

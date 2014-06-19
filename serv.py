@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import socket, select, sys
-import conf
 from client import *
+import conf
+import glob, imp
+from os.path import join, basename, splitext
 
 # Avoid creating .pyc files
 sys.dont_write_bytecode = True
@@ -33,7 +35,7 @@ class Server():
 				# Adding new clients to the list
 				for client in new_clients:
 					sock, infos = client.accept()
-					self.clients[sock] = Client(irc=sock)
+					self.clients[sock] = Client(sock, conf.in_cmd_hooks, conf.out_cmd_hooks)
 
 				to_read = []
 				try:
@@ -66,6 +68,14 @@ class Server():
 		print "Serveur DOWN."
 # </Server> ----------------------------------------------------------------
 
+def import_mods():
+	modules = {}
+	for path in glob.glob(join("mods",'[!_]*.py')): # list .py files not starting with '_'
+		name, ext = splitext(basename(path))
+		modules[name] = imp.load_source(name, path)
+		modules[name].init()
+
 if __name__ == "__main__":
+	import_mods()
 	serv = Server(conf.irc_host, conf.irc_ports)
 	serv.start()
