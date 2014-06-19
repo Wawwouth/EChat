@@ -9,7 +9,9 @@ sys.dont_write_bytecode = True
 
 # <Client> -----------------------------------------------------------------
 class Client():
-	def __init__(self, irc=None):
+	def __init__(self, irc=None, in_hooks={}, out_hooks={}):
+		self.in_cmd_hooks = in_hooks
+		self.out_cmd_hooks = out_hooks
 		self.linesep = re.compile(r"\r?\n")
 		self.motdfile = u"motd.txt"
 		self.has_quit = False
@@ -36,6 +38,20 @@ class Client():
 	def is_connected_to(self, chan):
 		chan = chan.replace("#", "")
 		return chan in self.ec_rooms
+
+	def add_in_hook(self, cmd, hook):
+		cmd = cmd.upper()
+		if cmd in self.in_cmd_hooks:
+			self.in_cmd_hooks[cmd].append(hook)
+		else:
+			self.in_cmd_hooks[cmd] = [hook]
+
+	def add_out_hook(self, cmd, hook):
+		cmd = cmd.upper()
+		if cmd in self.out_cmd_hooks:
+			self.out_cmd_hooks[cmd].append(hook)
+		else:
+			self.out_cmd_hooks[cmd] = [hook]
 
 	def nick(self, irc_nick, ec_nick):
 		if irc_nick != self.irc_nick or ec_nick != self.ec_nick:
@@ -95,7 +111,11 @@ class Client():
 		try:
 			self.command_handlers[cmd](cmd, args)
 		except KeyError:
-			self.num_reply(u"421", "%s :Unknown command" % (cmd))
+			if cmd.upper() in conf.out_cmd_hooks:
+				for hook in conf.out_cmd_hooks[cmd]:
+					hook(self, cmd, args)
+			else:
+				self.num_reply(u"421", "%s :Unknown command" % (cmd))
 
 # IRC handlers
 	def user_handler(self, cmd, args):
@@ -259,6 +279,10 @@ class Client():
 		self.send(u":%s JOIN %s" % (source, target))
 
 	def privmsg(self, target, source, msg):
+		cmd = "PRIVMSG"
+		if cmd in self.in_cmd_hooks:
+				for hook in self.in_cmd_hooks[cmd]:
+					target, source, msg = hook(target, source, msg)
 		message = u":%s PRIVMSG %s :%s" % (source, target, msg)
 		self.send(message)
 
