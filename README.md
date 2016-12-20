@@ -1,3 +1,4 @@
+(Projet fermé, le Tchat n'existe plus)
 EChat
 =====
 
@@ -17,5 +18,3 @@ Utilisation:
 5) Ouvrez votre client IRC et ajoutez un nouveau serveur avec le nom de votre choix, l'adresse: localhost, et le port: 6667 ou 6668.
 
 6) Connectez vous, puis suivez les instructions envoyées par le serveur.
-
-Note: Si vous rencontrez des bugs n'hésitez pas à me le signaler (knyxe.hequinoxteam@gmail.com ou pv Mammouth sur Quakenet).
