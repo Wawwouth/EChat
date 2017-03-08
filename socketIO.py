@@ -9,12 +9,6 @@ from urllib import *
 # Avoid creating .pyc files
 sys.dont_write_bytecode = True
 
-host = "95.142.101.119"
-port = 12565
-uid = "97723"
-salt = "esyznje1y0usos44ockcock80ssks04cc"
-join_data = json.dumps({"roomID":23, "userID":uid, "salt":salt})
-
 class SocketIO():
 	def __init__(self, host, port):
 		self.PORT = port
